@@ -28,7 +28,9 @@ extractPalette ::
   Image PixelRGB8 ->
   -- | The extracted palette
   ColorPalette
-extractPalette = undefined -- TODO
+extractPalette n _image = ColorPalette (replicate n black)
+  where
+    black = PixelRGB8 0 0 0
 
 -- | Attach the given color palette to the given image.
 attachPalette ::
