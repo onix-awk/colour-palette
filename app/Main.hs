@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Main (main) where
 
 import Codec.Picture
@@ -40,4 +42,27 @@ attachPalette ::
   Image PixelRGB8 ->
   -- | Image with the palette attached
   Image PixelRGB8
-attachPalette = undefined -- TODO
+attachPalette palette originalImage@Image {..} =
+  generateImage genFun targetWidth targetHeight
+  where
+    genFun :: Int -> Int -> PixelRGB8
+    genFun x y =
+      if x < imageWidth && y < imageHeight
+        then pixelAt originalImage x y
+        else getPaletteColor palette (x `div` cellSize)
+    targetWidth = imageWidth
+    targetHeight = imageHeight + cellSize
+    cellSize = targetWidth `ceilDiv` cpSize
+    cpSize = getPaletteSize palette
+
+----------------------------------------------------------------------------
+-- Helpers
+
+getPaletteSize :: ColorPalette -> Int
+getPaletteSize (ColorPalette l) = length l
+
+getPaletteColor :: ColorPalette -> Int -> PixelRGB8
+getPaletteColor (ColorPalette l) index = l !! index
+
+ceilDiv :: Int -> Int -> Int
+ceilDiv x y = (x + y - 1) `div` y
