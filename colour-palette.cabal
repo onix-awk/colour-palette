@@ -27,5 +27,7 @@ executable colour-palette
     build-depends:
         base >=4.13 && <5.0,
         bytestring >=0.9.2 && <0.12,
-        JuicyPixels >= 3.3.0
+        JuicyPixels >= 3.3.0,
+        vector >= 0.10 && <0.13,
+        vector-algorithms >= 0.8 && <0.9
     ghc-options: -Wall

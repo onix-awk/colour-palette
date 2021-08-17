@@ -3,6 +3,10 @@
 module Main (main) where
 
 import Codec.Picture
+import Data.Ord
+import Data.Vector (Vector)
+import qualified Data.Vector as V
+import qualified Data.Vector.Algorithms.Intro as V
 
 paletteSize :: Int
 paletteSize = 5
@@ -30,9 +34,47 @@ extractPalette ::
   Image PixelRGB8 ->
   -- | The extracted palette
   ColorPalette
-extractPalette n _image = ColorPalette (replicate n black)
+extractPalette n image = kClusterPalette n image topColors
   where
-    black = PixelRGB8 0 0 0
+    colorBins = distributePixels n image
+    topColors = extractTopColors n colorBins
+
+-- | Distribute each pixel of a given image into a given number of bins per
+-- dimension.
+distributePixels ::
+  -- | The bins
+  Int ->
+  -- | Input image
+  Image PixelRGB8 ->
+  -- | Number of bins per dimension
+  Vector (Int, PixelRGB8)
+distributePixels = undefined -- TODO
+
+-- | Extract top colors based on their frequency.
+extractTopColors ::
+  -- | The number of colors to be extracted
+  Int ->
+  -- | The bins
+  Vector (Int, PixelRGB8) ->
+  -- | Top colors
+  Vector PixelRGB8
+extractTopColors n bins = V.take n (V.map selectSecond (sortVector f bins))
+  where
+    selectSecond (_, pixel) = pixel
+    selectFirst (a, _) = a
+    f = comparing (Down . selectFirst)
+
+-- | Apply the k-means clustering algorithm on the given image.
+kClusterPalette ::
+  -- | The number of colors to extract (k)
+  Int ->
+  -- | Input image
+  Image PixelRGB8 ->
+  -- | The top colors to use for initialization of the k-means algorithm
+  Vector PixelRGB8 ->
+  -- | The resulting palette
+  ColorPalette
+kClusterPalette = undefined -- TODO
 
 -- | Attach the given color palette to the given image.
 attachPalette ::
@@ -66,3 +108,9 @@ getPaletteColor (ColorPalette l) index = l !! index
 
 ceilDiv :: Int -> Int -> Int
 ceilDiv x y = (x + y - 1) `div` y
+
+sortVector :: (a -> a -> Ordering) -> Vector a -> Vector a
+sortVector f v = V.create $ do
+  mv <- V.thaw v
+  V.sortBy f mv
+  return mv
