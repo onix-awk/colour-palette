@@ -1,11 +1,16 @@
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Main (main) where
 
 import Codec.Picture
 import Data.Ord
 import Data.Vector (Vector)
+import Data.Word (Word8)
+import Data.Vector.Mutable (MVector)
+import Control.Monad.ST
 import qualified Data.Vector as V
+import qualified Data.Vector.Mutable as VM
 import qualified Data.Vector.Algorithms.Intro as V
 
 paletteSize :: Int
@@ -42,13 +47,20 @@ extractPalette n image = kClusterPalette n image topColors
 -- | Distribute each pixel of a given image into a given number of bins per
 -- dimension.
 distributePixels ::
-  -- | The bins
+  -- | Number of bins per dimension
   Int ->
   -- | Input image
   Image PixelRGB8 ->
-  -- | Number of bins per dimension
+  -- | The bins
   Vector (Int, PixelRGB8)
-distributePixels = undefined -- TODO
+distributePixels n image@Image {..} = runST $ do
+  let vlength = n * n * n
+  v :: MVector s [PixelRGB8] <- VM.replicate vlength []
+  let addPixelToBin :: PixelRGB8 -> ST s ()
+      addPixelToBin pixel@(PixelRGB8 r g b) =
+        VM.modify v (pixel :) (rgbToIndex n r g b)
+  -- a = [PixelRGB8] -> [PixelRGB8]
+  undefined -- TODO
 
 -- | Extract top colors based on their frequency.
 extractTopColors ::
@@ -114,3 +126,11 @@ sortVector f v = V.create $ do
   mv <- V.thaw v
   V.sortBy f mv
   return mv
+
+rgbToIndex :: Int -> Word8 -> Word8 -> Word8 -> Int
+rgbToIndex n r g b =
+  (fromIntegral r `div` n) * n2
+    + (fromIntegral g `div` n) * n
+    + (fromIntegral b `div` n)
+  where
+    n2 = n * n
